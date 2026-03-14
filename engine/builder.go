@@ -4,13 +4,13 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/kordar/go-etl"
-	"github.com/kordar/go-etl/config"
-	"github.com/kordar/go-etl/metrics"
-	"github.com/kordar/go-etl/plugin"
+	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/config"
+	"github.com/kordar/goetl/metrics"
+	"github.com/kordar/goetl/plugin"
 )
 
-func Build(ctx context.Context, job config.Job, rt etl.Runtime) (*Engine, error) {
+func Build(ctx context.Context, job config.Job, rt goetl.Runtime) (*Engine, error) {
 	if rt.Logger == nil {
 		rt.Logger = slog.Default()
 	}
@@ -35,7 +35,7 @@ func Build(ctx context.Context, job config.Job, rt etl.Runtime) (*Engine, error)
 		return nil, err
 	}
 
-	transforms := make([]etl.Transformer, 0, len(job.Transforms))
+	transforms := make([]goetl.Transformer, 0, len(job.Transforms))
 	for _, tcfg := range job.Transforms {
 		t, err := plugin.Transforms.Build(ctx, tcfg, rt)
 		if err != nil {
@@ -46,7 +46,7 @@ func Build(ctx context.Context, job config.Job, rt etl.Runtime) (*Engine, error)
 
 	eng := &Engine{
 		Source:      source,
-		Pipeline:    etl.NewPipeline(transforms...),
+		Pipeline:    goetl.NewPipeline(transforms...),
 		Sink:        sink,
 		Checkpoints: rt.Checkpoints,
 		Metrics:     rt.Metrics,

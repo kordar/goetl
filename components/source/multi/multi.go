@@ -4,16 +4,16 @@ import (
 	"context"
 	"sync"
 
-	"github.com/kordar/go-etl"
+	"github.com/kordar/goetl"
 )
 
 type Source struct {
 	NameValue string
-	Sources   []etl.Source
+	Sources   []goetl.Source
 }
 
-func New(sources ...etl.Source) *Source {
-	return &Source{Sources: append([]etl.Source(nil), sources...)}
+func New(sources ...goetl.Source) *Source {
+	return &Source{Sources: append([]goetl.Source(nil), sources...)}
 }
 
 func (s *Source) Name() string {
@@ -23,7 +23,7 @@ func (s *Source) Name() string {
 	return "multi"
 }
 
-func (s *Source) Start(ctx context.Context, out chan<- etl.Message) error {
+func (s *Source) Start(ctx context.Context, out chan<- goetl.Message) error {
 	if len(s.Sources) == 0 {
 		return nil
 	}

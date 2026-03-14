@@ -1,3 +1,3 @@
-module github.com/kordar/go-etl
+module github.com/kordar/goetl
 
 go 1.22

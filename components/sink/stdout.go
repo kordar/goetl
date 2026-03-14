@@ -7,7 +7,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/kordar/go-etl"
+	"github.com/kordar/goetl"
 )
 
 type Stdout struct {
@@ -24,7 +24,7 @@ func NewStdout(w io.Writer) *Stdout {
 
 func (s *Stdout) Name() string { return "stdout" }
 
-func (s *Stdout) Write(ctx context.Context, r *etl.Record) error {
+func (s *Stdout) Write(ctx context.Context, r *goetl.Record) error {
 	_ = ctx
 	s.mu.Lock()
 	defer s.mu.Unlock()

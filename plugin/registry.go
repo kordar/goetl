@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/kordar/go-etl"
-	"github.com/kordar/go-etl/checkpoint"
-	"github.com/kordar/go-etl/config"
-	"github.com/kordar/go-etl/metrics"
+	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/checkpoint"
+	"github.com/kordar/goetl/config"
+	"github.com/kordar/goetl/metrics"
 )
 
 var ErrNotRegistered = errors.New("plugin type not registered")
 
-type Factory[T any] func(ctx context.Context, cfg config.Component, rt etl.Runtime) (T, error)
+type Factory[T any] func(ctx context.Context, cfg config.Component, rt goetl.Runtime) (T, error)
 
 type Registry[T any] struct {
 	kind      string
@@ -32,7 +32,7 @@ func (r *Registry[T]) Register(typeName string, f Factory[T]) {
 	r.factories[typeName] = f
 }
 
-func (r *Registry[T]) Build(ctx context.Context, cfg config.Component, rt etl.Runtime) (T, error) {
+func (r *Registry[T]) Build(ctx context.Context, cfg config.Component, rt goetl.Runtime) (T, error) {
 	r.mu.RLock()
 	f, ok := r.factories[cfg.Type]
 	r.mu.RUnlock()
@@ -43,8 +43,8 @@ func (r *Registry[T]) Build(ctx context.Context, cfg config.Component, rt etl.Ru
 	return f(ctx, cfg, rt)
 }
 
-var Sources = NewRegistry[etl.Source]("source")
-var Transforms = NewRegistry[etl.Transformer]("transform")
-var Sinks = NewRegistry[etl.Sink]("sink")
+var Sources = NewRegistry[goetl.Source]("source")
+var Transforms = NewRegistry[goetl.Transformer]("transform")
+var Sinks = NewRegistry[goetl.Sink]("sink")
 var Checkpoints = NewRegistry[checkpoint.Store]("checkpoint")
 var MetricCollectors = NewRegistry[metrics.Collector]("metrics")

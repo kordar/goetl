@@ -4,26 +4,26 @@ import (
 	"context"
 	"time"
 
-	"github.com/kordar/go-etl"
-	"github.com/kordar/go-etl/checkpoint"
-	"github.com/kordar/go-etl/components/memory"
-	"github.com/kordar/go-etl/components/sink"
-	"github.com/kordar/go-etl/components/source/dynamic"
-	"github.com/kordar/go-etl/components/source/multi"
-	"github.com/kordar/go-etl/components/transform"
-	"github.com/kordar/go-etl/config"
-	"github.com/kordar/go-etl/plugin"
+	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/checkpoint"
+	"github.com/kordar/goetl/components/memory"
+	"github.com/kordar/goetl/components/sink"
+	"github.com/kordar/goetl/components/source/dynamic"
+	"github.com/kordar/goetl/components/source/multi"
+	"github.com/kordar/goetl/components/transform"
+	"github.com/kordar/goetl/config"
+	"github.com/kordar/goetl/plugin"
 )
 
 func Register() {
-	plugin.Checkpoints.Register("memory", func(ctx context.Context, cfg config.Component, rt etl.Runtime) (checkpoint.Store, error) {
+	plugin.Checkpoints.Register("memory", func(ctx context.Context, cfg config.Component, rt goetl.Runtime) (checkpoint.Store, error) {
 		_ = ctx
 		_ = cfg
 		_ = rt
 		return memory.NewCheckpointStore(), nil
 	})
 
-	plugin.Sources.Register("memory_sequence", func(ctx context.Context, cfg config.Component, rt etl.Runtime) (etl.Source, error) {
+	plugin.Sources.Register("memory_sequence", func(ctx context.Context, cfg config.Component, rt goetl.Runtime) (goetl.Source, error) {
 		_ = ctx
 		var s struct {
 			CheckpointKey string `json:"checkpoint_key"`
@@ -43,7 +43,7 @@ func Register() {
 		}, nil
 	})
 
-	plugin.Sources.Register("multi", func(ctx context.Context, cfg config.Component, rt etl.Runtime) (etl.Source, error) {
+	plugin.Sources.Register("multi", func(ctx context.Context, cfg config.Component, rt goetl.Runtime) (goetl.Source, error) {
 		var s struct {
 			Sources []config.Component `json:"sources"`
 		}
@@ -51,7 +51,7 @@ func Register() {
 			return nil, err
 		}
 
-		children := make([]etl.Source, 0, len(s.Sources))
+		children := make([]goetl.Source, 0, len(s.Sources))
 		for _, childCfg := range s.Sources {
 			child, err := plugin.Sources.Build(ctx, childCfg, rt)
 			if err != nil {
@@ -65,7 +65,7 @@ func Register() {
 		return ms, nil
 	})
 
-	plugin.Sources.Register("dynamic_multi", func(ctx context.Context, cfg config.Component, rt etl.Runtime) (etl.Source, error) {
+	plugin.Sources.Register("dynamic_multi", func(ctx context.Context, cfg config.Component, rt goetl.Runtime) (goetl.Source, error) {
 		var s struct {
 			Provider struct {
 				Type     string         `json:"type"`
@@ -90,21 +90,21 @@ func Register() {
 			Strategy:       s.Strategy,
 			DrainTimeout:   time.Duration(s.DrainTimeoutMs) * time.Millisecond,
 			DedupLatest:    s.DedupLatest,
-			BuildChild: func(cctx context.Context, c config.Component) (etl.Source, error) {
+			BuildChild: func(cctx context.Context, c config.Component) (goetl.Source, error) {
 				return plugin.Sources.Build(cctx, c, rt)
 			},
 		}
 		return src, nil
 	})
 
-	plugin.Transforms.Register("trim_strings", func(ctx context.Context, cfg config.Component, rt etl.Runtime) (etl.Transformer, error) {
+	plugin.Transforms.Register("trim_strings", func(ctx context.Context, cfg config.Component, rt goetl.Runtime) (goetl.Transformer, error) {
 		_ = ctx
 		_ = cfg
 		_ = rt
 		return &transform.TrimStrings{}, nil
 	})
 
-	plugin.Sinks.Register("stdout", func(ctx context.Context, cfg config.Component, rt etl.Runtime) (etl.Sink, error) {
+	plugin.Sinks.Register("stdout", func(ctx context.Context, cfg config.Component, rt goetl.Runtime) (goetl.Sink, error) {
 		_ = ctx
 		_ = cfg
 		_ = rt

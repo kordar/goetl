@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/kordar/go-etl/checkpoint"
+	"github.com/kordar/goetl/checkpoint"
 )
 
 type CheckpointStore struct {

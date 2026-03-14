@@ -1,10 +1,10 @@
-package etl
+package goetl
 
 import (
 	"log/slog"
 
-	"github.com/kordar/go-etl/checkpoint"
-	"github.com/kordar/go-etl/metrics"
+	"github.com/kordar/goetl/checkpoint"
+	"github.com/kordar/goetl/metrics"
 )
 
 type Runtime struct {

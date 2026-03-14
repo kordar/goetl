@@ -11,9 +11,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/kordar/go-etl"
-	"github.com/kordar/go-etl/checkpoint"
-	"github.com/kordar/go-etl/metrics"
+	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/checkpoint"
+	"github.com/kordar/goetl/metrics"
 )
 
 type Options struct {
@@ -25,15 +25,15 @@ type Options struct {
 }
 
 type Engine struct {
-	Source      etl.Source
-	Pipeline    *etl.Pipeline
-	Sink        etl.Sink
+	Source      goetl.Source
+	Pipeline    *goetl.Pipeline
+	Sink        goetl.Sink
 	Checkpoints checkpoint.Store
 	Metrics     metrics.Collector
 	Logger      *slog.Logger
 	Options     Options
 
-	OnError func(ctx context.Context, msg etl.Message, err error)
+	OnError func(ctx context.Context, msg goetl.Message, err error)
 
 	desiredWorkers atomic.Int32
 
@@ -52,7 +52,7 @@ func (e *Engine) Run(ctx context.Context) error {
 		return errors.New("engine requires Source")
 	}
 	if e.Pipeline == nil {
-		e.Pipeline = etl.NewPipeline()
+		e.Pipeline = goetl.NewPipeline()
 	}
 	if e.Metrics == nil {
 		e.Metrics = metrics.NopCollector{}
@@ -88,12 +88,12 @@ func (e *Engine) Run(ctx context.Context) error {
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	rawCh := make(chan etl.Message, opts.QueueBuffer)
+	rawCh := make(chan goetl.Message, opts.QueueBuffer)
 	workCh := make(chan sequencedMessage, opts.QueueBuffer)
 	ackCh := make(chan ack, opts.QueueBuffer)
 	errCh := make(chan error, 1)
 
-	rt := etl.Runtime{
+	rt := goetl.Runtime{
 		Logger:      e.Logger,
 		Metrics:     e.Metrics,
 		Checkpoints: e.Checkpoints,
@@ -221,7 +221,7 @@ func (e *Engine) Run(ctx context.Context) error {
 }
 
 type sequencedMessage struct {
-	etl.Message
+	goetl.Message
 	partition string
 	seq       uint64
 }
@@ -246,10 +246,10 @@ func (s *sequencer) Next(partition string) uint64 {
 type ack struct {
 	partition  string
 	seq        uint64
-	checkpoint *etl.Checkpoint
+	checkpoint *goetl.Checkpoint
 }
 
-func runCommitter(ctx context.Context, rt etl.Runtime, in <-chan ack) error {
+func runCommitter(ctx context.Context, rt goetl.Runtime, in <-chan ack) error {
 	if rt.Checkpoints == nil {
 		for {
 			select {
@@ -265,7 +265,7 @@ func runCommitter(ctx context.Context, rt etl.Runtime, in <-chan ack) error {
 
 	type state struct {
 		next    uint64
-		pending map[uint64]*etl.Checkpoint
+		pending map[uint64]*goetl.Checkpoint
 	}
 
 	states := map[string]*state{}
@@ -282,7 +282,7 @@ func runCommitter(ctx context.Context, rt etl.Runtime, in <-chan ack) error {
 			}
 			s, ok := states[a.partition]
 			if !ok {
-				s = &state{pending: map[uint64]*etl.Checkpoint{}}
+				s = &state{pending: map[uint64]*goetl.Checkpoint{}}
 				states[a.partition] = s
 			}
 			s.pending[a.seq] = a.checkpoint
@@ -309,10 +309,10 @@ func sendErr(dst chan<- error, err error) {
 }
 
 type workerPoolDeps struct {
-	pipeline *etl.Pipeline
-	sink     etl.Sink
+	pipeline *goetl.Pipeline
+	sink     goetl.Sink
 	metrics  metrics.Collector
-	onError  func(ctx context.Context, msg etl.Message, err error)
+	onError  func(ctx context.Context, msg goetl.Message, err error)
 	source   string
 	ackCh    chan<- ack
 }
@@ -392,8 +392,8 @@ func (p *workerPool) runWorker(ctx context.Context, workerID int) {
 	latency := p.deps.metrics.Histogram("etl_record_latency_ms", labels)
 
 	sink := p.deps.sink
-	bs, batched := sink.(etl.BatchSink)
-	var batchOpts etl.BatchOptions
+	bs, batched := sink.(goetl.BatchSink)
+	var batchOpts goetl.BatchOptions
 	if batched {
 		batchOpts = bs.BatchOptions()
 		if batchOpts.MaxBatchSize <= 0 {
@@ -404,7 +404,7 @@ func (p *workerPool) runWorker(ctx context.Context, workerID int) {
 		}
 	}
 
-	var batch []*etl.Record
+	var batch []*goetl.Record
 	var batchAcks []ack
 
 	flush := func() error {
@@ -447,7 +447,7 @@ func (p *workerPool) runWorker(ctx context.Context, workerID int) {
 		case <-timer.C:
 			if err := flush(); err != nil {
 				failed.Add(1)
-				sendErrToHandler(p.deps.onError, ctx, etl.Message{}, err)
+				sendErrToHandler(p.deps.onError, ctx, goetl.Message{}, err)
 				return
 			}
 			timer.Reset(batchOpts.FlushInterval)
@@ -517,7 +517,7 @@ func (p *workerPool) Wait() {
 	p.wg.Wait()
 }
 
-func sendErrToHandler(handler func(ctx context.Context, msg etl.Message, err error), ctx context.Context, msg etl.Message, err error) {
+func sendErrToHandler(handler func(ctx context.Context, msg goetl.Message, err error), ctx context.Context, msg goetl.Message, err error) {
 	if handler == nil {
 		return
 	}
@@ -530,7 +530,7 @@ func HashPartitionKey(s string) uint64 {
 	return h.Sum64()
 }
 
-func FormatMessageJSON(msg etl.Message) string {
+func FormatMessageJSON(msg goetl.Message) string {
 	b, _ := json.Marshal(msg)
 	return string(b)
 }

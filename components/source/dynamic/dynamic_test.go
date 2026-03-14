@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kordar/go-etl"
-	"github.com/kordar/go-etl/config"
+	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/config"
 )
 
 type stubProvider struct {
@@ -24,7 +24,7 @@ type stubSrc struct {
 }
 
 func (s *stubSrc) Name() string { return "stub" }
-func (s *stubSrc) Start(ctx context.Context, out chan<- etl.Message) error {
+func (s *stubSrc) Start(ctx context.Context, out chan<- goetl.Message) error {
 	s.started.Add(1)
 	<-ctx.Done()
 	_ = out
@@ -48,7 +48,7 @@ func TestDynamic_DedupLatestWins(t *testing.T) {
 		Provider:       p,
 		ReloadInterval: time.Hour, // avoid second reload
 		DedupLatest:    true,
-		BuildChild: func(ctx context.Context, c config.Component) (etl.Source, error) {
+		BuildChild: func(ctx context.Context, c config.Component) (goetl.Source, error) {
 			_ = ctx
 			builtCount.Add(1)
 			if v, ok := c.Settings["v"].(int); ok {
@@ -60,7 +60,7 @@ func TestDynamic_DedupLatestWins(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
-	out := make(chan etl.Message, 1)
+	out := make(chan goetl.Message, 1)
 	go func() { _ = src.Start(ctx, out) }()
 
 	// wait a bit for start

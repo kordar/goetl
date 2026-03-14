@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kordar/go-etl"
-	"github.com/kordar/go-etl/checkpoint"
+	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/checkpoint"
 )
 
 type SequenceSource struct {
@@ -19,7 +19,7 @@ type SequenceSource struct {
 
 func (s *SequenceSource) Name() string { return "memory_sequence" }
 
-func (s *SequenceSource) Start(ctx context.Context, out chan<- etl.Message) error {
+func (s *SequenceSource) Start(ctx context.Context, out chan<- goetl.Message) error {
 	total := s.Total
 	if total < 0 {
 		total = 0
@@ -52,9 +52,9 @@ func (s *SequenceSource) Start(ctx context.Context, out chan<- etl.Message) erro
 			}
 		}
 
-		msg := etl.Message{
+		msg := goetl.Message{
 			Partition: p,
-			Record: &etl.Record{
+			Record: &goetl.Record{
 				ID:        strconv.Itoa(i),
 				Timestamp: time.Now(),
 				Source:    s.Name(),
@@ -64,7 +64,7 @@ func (s *SequenceSource) Start(ctx context.Context, out chan<- etl.Message) erro
 			},
 		}
 		if s.CheckpointKey != "" {
-			msg.Checkpoint = &etl.Checkpoint{Key: s.CheckpointKey, Value: strconv.Itoa(i)}
+			msg.Checkpoint = &goetl.Checkpoint{Key: s.CheckpointKey, Value: strconv.Itoa(i)}
 		}
 		select {
 		case <-ctx.Done():

@@ -5,21 +5,21 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/kordar/go-etl"
+	"github.com/kordar/goetl"
 )
 
 type managedSource struct {
 	mu      sync.Mutex
 	started bool
 	ctx     context.Context
-	out     chan<- etl.Message
+	out     chan<- goetl.Message
 
 	children map[string]*managedChild
 }
 
 type managedChild struct {
 	gen     uint64
-	src     etl.Source
+	src     goetl.Source
 	running bool
 	cancel  context.CancelFunc
 	done    chan struct{}
@@ -33,7 +33,7 @@ func newManagedSource() *managedSource {
 
 func (s *managedSource) Name() string { return "managed_source" }
 
-func (s *managedSource) Start(ctx context.Context, out chan<- etl.Message) error {
+func (s *managedSource) Start(ctx context.Context, out chan<- goetl.Message) error {
 	s.mu.Lock()
 	if s.started {
 		s.mu.Unlock()
@@ -71,7 +71,7 @@ func (s *managedSource) Start(ctx context.Context, out chan<- etl.Message) error
 	return ctx.Err()
 }
 
-func (s *managedSource) Load(name string, src etl.Source) error {
+func (s *managedSource) Load(name string, src goetl.Source) error {
 	if src == nil {
 		return errors.New("source is nil")
 	}

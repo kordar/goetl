@@ -59,7 +59,7 @@ flowchart LR
 ## 目录结构
 
 ```
-go-etl
+goetl
   engine/        调度引擎（背压、worker、checkpoint commit）
   plugin/        插件注册表（source/transform/sink/checkpoint/metrics）
   config/        配置结构与 settings 解码
@@ -87,10 +87,10 @@ package main
 import (
 	"context"
 
-	"github.com/kordar/go-etl"
-	"github.com/kordar/go-etl/components/builtin"
-	"github.com/kordar/go-etl/config"
-	"github.com/kordar/go-etl/engine"
+	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/components/builtin"
+	"github.com/kordar/goetl/config"
+	"github.com/kordar/goetl/engine"
 )
 
 func main() {

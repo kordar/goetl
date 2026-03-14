@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kordar/go-etl"
-	"github.com/kordar/go-etl/config"
+	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/config"
 )
 
-type BuildChildFunc func(ctx context.Context, c config.Component) (etl.Source, error)
+type BuildChildFunc func(ctx context.Context, c config.Component) (goetl.Source, error)
 
 type Provider interface {
 	List(ctx context.Context) ([]config.Component, error)
@@ -71,7 +71,7 @@ type child struct {
 	hash   string
 }
 
-func (s *Source) Start(ctx context.Context, out chan<- etl.Message) error {
+func (s *Source) Start(ctx context.Context, out chan<- goetl.Message) error {
 	if s.Provider == nil || s.BuildChild == nil {
 		return errors.New("dynamic source requires Provider and BuildChild")
 	}
@@ -134,7 +134,7 @@ func (s *Source) Start(ctx context.Context, out chan<- etl.Message) error {
 			}
 			childCtx, cancel := context.WithCancel(ctx)
 			done := make(chan struct{})
-			go func(src etl.Source) {
+			go func(src goetl.Source) {
 				_ = src.Start(childCtx, out)
 				close(done)
 			}(src)

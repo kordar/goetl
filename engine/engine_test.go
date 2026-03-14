@@ -6,18 +6,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kordar/go-etl"
-	"github.com/kordar/go-etl/components/memory"
+	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/components/memory"
 )
 
 type collectSink struct {
 	mu   sync.Mutex
-	recs []*etl.Record
+	recs []*goetl.Record
 }
 
 func (s *collectSink) Name() string { return "collect" }
 
-func (s *collectSink) Write(ctx context.Context, r *etl.Record) error {
+func (s *collectSink) Write(ctx context.Context, r *goetl.Record) error {
 	_ = ctx
 	s.mu.Lock()
 	s.recs = append(s.recs, r)
@@ -49,7 +49,7 @@ func TestEngine_SequenceCheckpoint(t *testing.T) {
 
 	eng := &Engine{
 		Source:      src,
-		Pipeline:    etl.NewPipeline(),
+		Pipeline:    goetl.NewPipeline(),
 		Sink:        sink,
 		Checkpoints: store,
 		Options: Options{
@@ -94,7 +94,7 @@ func TestEngine_ResumeFromCheckpoint(t *testing.T) {
 
 	eng := &Engine{
 		Source:      src,
-		Pipeline:    etl.NewPipeline(),
+		Pipeline:    goetl.NewPipeline(),
 		Sink:        sink,
 		Checkpoints: store,
 		Options: Options{

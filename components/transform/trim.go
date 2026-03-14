@@ -4,14 +4,14 @@ import (
 	"context"
 	"strings"
 
-	"github.com/kordar/go-etl"
+	"github.com/kordar/goetl"
 )
 
 type TrimStrings struct{}
 
 func (t *TrimStrings) Name() string { return "trim_strings" }
 
-func (t *TrimStrings) Transform(ctx context.Context, r *etl.Record) (*etl.Record, error) {
+func (t *TrimStrings) Transform(ctx context.Context, r *goetl.Record) (*goetl.Record, error) {
 	_ = ctx
 	if r == nil || r.Data == nil {
 		return r, nil

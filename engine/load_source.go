@@ -3,10 +3,10 @@ package engine
 import (
 	"errors"
 
-	"github.com/kordar/go-etl"
+	"github.com/kordar/goetl"
 )
 
-func (e *Engine) LoadSource(name string, src etl.Source) error {
+func (e *Engine) LoadSource(name string, src goetl.Source) error {
 	if !e.Options.DynamicSources {
 		return errors.New("dynamic sources disabled")
 	}

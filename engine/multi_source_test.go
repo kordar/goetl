@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kordar/go-etl"
-	"github.com/kordar/go-etl/components/builtin"
-	"github.com/kordar/go-etl/components/memory"
-	"github.com/kordar/go-etl/config"
-	"github.com/kordar/go-etl/plugin"
+	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/components/builtin"
+	"github.com/kordar/goetl/components/memory"
+	"github.com/kordar/goetl/config"
+	"github.com/kordar/goetl/plugin"
 )
 
 func TestMultiSource_BuildAndRun(t *testing.T) {
@@ -18,7 +18,7 @@ func TestMultiSource_BuildAndRun(t *testing.T) {
 	builtin.Register()
 
 	store := memory.NewCheckpointStore()
-	rt := etl.Runtime{Checkpoints: store}
+	rt := goetl.Runtime{Checkpoints: store}
 
 	cfg := config.Component{
 		Type: "multi",
@@ -54,7 +54,7 @@ func TestMultiSource_BuildAndRun(t *testing.T) {
 	sink := &collectSink{}
 	eng := &Engine{
 		Source:      src,
-		Pipeline:    etl.NewPipeline(),
+		Pipeline:    goetl.NewPipeline(),
 		Sink:        sink,
 		Checkpoints: store,
 		Options: Options{

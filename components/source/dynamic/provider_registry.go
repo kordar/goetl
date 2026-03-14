@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/kordar/go-etl/config"
+	"github.com/kordar/goetl/config"
 )
 
 var ErrProviderNotRegistered = errors.New("provider type not registered")

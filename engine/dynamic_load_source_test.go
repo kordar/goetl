@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kordar/go-etl/components/memory"
+	"github.com/kordar/goetl/components/memory"
 )
 
 func TestEngine_LoadSource_Replace(t *testing.T) {
