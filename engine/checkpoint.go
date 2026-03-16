@@ -4,7 +4,12 @@ import (
 	"context"
 
 	"github.com/kordar/goetl"
+	"github.com/kordar/goetl/checkpoint"
 )
+
+func (e *Engine) GetStore() checkpoint.Store {
+	return e.Checkpoint
+}
 
 func (e *Engine) RunCommitter(ctx context.Context, in <-chan ack) error {
 	if e.Checkpoint == nil {

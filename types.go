@@ -7,6 +7,7 @@ type Record struct {
 	Timestamp time.Time
 	Source    string
 	Data      map[string]any
+	Exts      map[string]any
 }
 
 type Checkpoint struct {
