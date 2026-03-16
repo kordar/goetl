@@ -44,23 +44,22 @@ func Build(ctx context.Context, job config.Job, rt goetl.Runtime) (*Engine, erro
 		transforms = append(transforms, t)
 	}
 
-	eng := &Engine{
-		Source:      source,
-		Pipeline:    goetl.NewPipeline(transforms...),
-		Sink:        sink,
-		Checkpoints: rt.Checkpoints,
-		Metrics:     rt.Metrics,
-		Logger:      rt.Logger,
+	engineOpts := []EngineOption{
+		WithPipeline(goetl.NewPipeline(transforms...)),
+		WithMetrics(rt.Metrics),
+		WithLogger(rt.Logger),
 	}
 
 	if job.Queue.Buffer > 0 {
-		eng.Options.QueueBuffer = job.Queue.Buffer
+		engineOpts = append(engineOpts, WithQueueBuffer(job.Queue.Buffer))
 	}
 	if job.Workers.Min != 0 || job.Workers.Max != 0 {
-		eng.Options.MinWorkers = job.Workers.Min
-		eng.Options.MaxWorkers = job.Workers.Max
-		eng.Options.InitialWorkers = job.Workers.Max
+		engineOpts = append(engineOpts, WithWorkers(job.Workers.Min, job.Workers.Max, job.Workers.Max))
 	}
 
+	eng := NewEngine(sink, engineOpts...)
+	if err := eng.LoadSource("", source); err != nil {
+		return nil, err
+	}
 	return eng, nil
 }
