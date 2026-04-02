@@ -27,6 +27,8 @@ type BatchSinkDispatcher struct {
 	errCh  chan<- error
 	start  sync.Once
 	closed sync.Once
+
+	deliverFinishCallback func(ctx context.Context, msg ...goetl.Message) error
 }
 
 func NewBatchSinkDispatcher(sinks ...goetl.Sink) *BatchSinkDispatcher {
@@ -86,6 +88,11 @@ func (d *BatchSinkDispatcher) WithQueueBuffer(n int) *BatchSinkDispatcher {
 	if n > 0 {
 		d.queueBuffer = n
 	}
+	return d
+}
+
+func (d *BatchSinkDispatcher) WithDeliverFinishCallback(cb func(ctx context.Context, msg ...goetl.Message) error) *BatchSinkDispatcher {
+	d.deliverFinishCallback = cb
 	return d
 }
 
@@ -177,6 +184,10 @@ func (d *BatchSinkDispatcher) flush(ctx context.Context, batch []goetl.Message) 
 			continue
 		}
 	}
+	if d.deliverFinishCallback != nil && len(batch) > 0 {
+		_ = d.deliverFinishCallback(ctx, batch...)
+	}
+
 }
 
 func (d *BatchSinkDispatcher) retry(ctx context.Context, fn func() error) error {
