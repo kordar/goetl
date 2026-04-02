@@ -1,23 +1,32 @@
 package goetl
 
-import "github.com/spf13/cast"
+import (
+	"github.com/kordar/goetl/checkpoint"
+	"github.com/spf13/cast"
+)
 
 type Record struct {
-	Data any
-	Meta Meta
+	Data any  `json:"data"`
+	Meta Meta `json:"meta"`
 }
 
 type Meta struct {
-	Source    string
-	Offset    any // checkpoint用
-	Timestamp int64
-	TraceID   string
+	Source    string `json:"source"`
+	Timestamp int64  `json:"timestamp"`
+	TraceID   string `json:"trace_id"`
 }
 
 type Message struct {
-	Record    *Record
-	Partition string
-	Attrs     map[string]any
+	Record     *Record           `json:"record"`
+	Partition  string            `json:"partition"`
+	Ack        string            `json:"ack"`
+	Checkpoint string            `json:"checkpoint"`
+	Cursor     checkpoint.Cursor `json:"cursor"`
+	Attrs      map[string]any    `json:"attrs"`
+}
+
+func NewMessage(record *Record) *Message {
+	return &Message{Record: record}
 }
 
 func NewRecord(data any) *Record {
@@ -34,11 +43,6 @@ func (r *Record) WithSource(source string) *Record {
 	return r
 }
 
-func (r *Record) WithOffset(offset any) *Record {
-	r.Meta.Offset = offset
-	return r
-}
-
 func (r *Record) WithTimestamp(ts int64) *Record {
 	r.Meta.Timestamp = ts
 	return r
@@ -47,6 +51,48 @@ func (r *Record) WithTimestamp(ts int64) *Record {
 func (r *Record) WithTraceID(traceID string) *Record {
 	r.Meta.TraceID = traceID
 	return r
+}
+
+func (m *Message) WithRecord(record *Record) *Message {
+	m.Record = record
+	return m
+}
+
+func (m *Message) WithPartition(partition string) *Message {
+	m.Partition = partition
+	return m
+}
+
+func (m *Message) WithAck(ack string) *Message {
+	m.Ack = ack
+	return m
+}
+
+func (m *Message) WithCheckpoint(key string) *Message {
+	m.Checkpoint = key
+	return m
+}
+
+func (m *Message) WithCursor(cursor checkpoint.Cursor) *Message {
+	m.Cursor = cursor
+	return m
+}
+
+func (m *Message) WithCursorValues(values ...any) *Message {
+	m.Cursor.Values = append([]any(nil), values...)
+	return m
+}
+
+func (m *Message) WithCursorMeta(meta map[string]any) *Message {
+	if meta == nil {
+		m.Cursor.Meta = nil
+		return m
+	}
+	m.Cursor.Meta = make(map[string]any, len(meta))
+	for k, v := range meta {
+		m.Cursor.Meta[k] = v
+	}
+	return m
 }
 
 func (m *Message) With(key string, value any) *Message {
