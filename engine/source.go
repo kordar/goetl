@@ -78,31 +78,40 @@ func (e *Engine) UnloadSource(name string) {
 func (e *Engine) runSource(ctx context.Context, s goetl.Source) {
 	defer e.wg.Done()
 	ch := make(chan goetl.Message, 256)
-	if err := s.Start(ctx, ch); err != nil {
-		select {
-		case e.errChan <- err:
-		default:
-		}
-		return
-	}
-	for msg := range ch {
-		if e.chain == nil {
-			e.dispatch(ctx, msg)
-			continue
-		}
-		outs, err := e.chain.ProcessMessage(ctx, msg)
-		if err != nil {
+	go func() {
+		if err := s.Start(ctx, ch); err != nil {
 			select {
 			case e.errChan <- err:
 			default:
 			}
-			continue
 		}
-		if len(outs) == 0 {
-			continue
-		}
-		for _, outMsg := range outs {
-			e.dispatch(ctx, outMsg)
+	}()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg, ok := <-ch:
+			if !ok {
+				return
+			}
+			if e.chain == nil {
+				e.dispatch(ctx, msg)
+				continue
+			}
+			outs, err := e.chain.ProcessMessage(ctx, msg)
+			if err != nil {
+				select {
+				case e.errChan <- err:
+				default:
+				}
+				continue
+			}
+			if len(outs) == 0 {
+				continue
+			}
+			for _, outMsg := range outs {
+				e.dispatch(ctx, outMsg)
+			}
 		}
 	}
 }
