@@ -86,3 +86,24 @@ func (e *Engine) Stop() {
 		e.cancel()
 	}
 }
+
+// Run 启动引擎并在独立协程中消费 out/err 通道
+// onMsg / onErr 为可选回调；当为 nil 时将忽略对应通道的数据
+// 调用方需通过 ctx 取消或调用 Stop() 结束运行
+func (e *Engine) Run(ctx context.Context, onMsg func(goetl.Message), onErr func(error)) {
+	outCh, errCh := e.Start(ctx)
+	go func() {
+		for msg := range outCh {
+			if onMsg != nil {
+				onMsg(msg)
+			}
+		}
+	}()
+	go func() {
+		for err := range errCh {
+			if err != nil && onErr != nil {
+				onErr(err)
+			}
+		}
+	}()
+}

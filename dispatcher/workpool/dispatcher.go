@@ -11,8 +11,9 @@ type WorkpoolDispatcher struct {
 	TH         *TaskHandle
 	TaskIDFunc func(goetl.Message) string
 
-	mu      sync.RWMutex
-	errChan chan<- error
+	mu       sync.RWMutex
+	errChan  chan<- error
+	blocking bool
 }
 
 func (d *WorkpoolDispatcher) Start(ctx context.Context, errChan chan<- error) {
@@ -23,6 +24,11 @@ func (d *WorkpoolDispatcher) Start(ctx context.Context, errChan chan<- error) {
 	d.errChan = errChan
 	d.mu.Unlock()
 	d.TH.StartWorkerPool(ctx, errChan)
+}
+
+func (d *WorkpoolDispatcher) WithBlocking(v bool) *WorkpoolDispatcher {
+	d.blocking = v
+	return d
 }
 
 func (d *WorkpoolDispatcher) Deliver(ctx context.Context, msg goetl.Message) {
@@ -36,7 +42,11 @@ func (d *WorkpoolDispatcher) Deliver(ctx context.Context, msg goetl.Message) {
 		ch = d.errChan
 		d.mu.RUnlock()
 	}
-	d.TH.SendToTaskQueue(ctx, ch, taskID, msg)
+	if d.blocking {
+		d.TH.SendToTaskQueueBlocking(ctx, ch, taskID, msg)
+	} else {
+		d.TH.SendToTaskQueue(ctx, ch, taskID, msg)
+	}
 }
 
 func (d *WorkpoolDispatcher) Wait() {

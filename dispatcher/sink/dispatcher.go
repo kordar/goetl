@@ -19,6 +19,7 @@ type BatchSinkDispatcher struct {
 	retries       int
 	backoff       func(attempt int) time.Duration
 	queueBuffer   int
+	blocking      bool
 
 	in     chan goetl.Message
 	wg     sync.WaitGroup
@@ -38,12 +39,18 @@ func NewBatchSinkDispatcher(sinks ...goetl.Sink) *BatchSinkDispatcher {
 			return time.Second * time.Duration(attempt+1)
 		},
 		queueBuffer: 1024,
+		blocking:    true,
 	}
 	return d
 }
 
 func (d *BatchSinkDispatcher) WithSinks(sinks ...goetl.Sink) *BatchSinkDispatcher {
 	d.sinks = append([]goetl.Sink(nil), sinks...)
+	return d
+}
+
+func (d *BatchSinkDispatcher) WithBlocking(v bool) *BatchSinkDispatcher {
+	d.blocking = v
 	return d
 }
 
@@ -99,12 +106,20 @@ func (d *BatchSinkDispatcher) Deliver(ctx context.Context, msg goetl.Message) {
 		d.report(ErrDispatchQueueFull)
 		return
 	}
-	select {
-	case <-ctx.Done():
-		return
-	case d.in <- msg:
-	default:
-		d.report(ErrDispatchQueueFull)
+	if d.blocking {
+		select {
+		case <-ctx.Done():
+			return
+		case d.in <- msg:
+		}
+	} else {
+		select {
+		case <-ctx.Done():
+			return
+		case d.in <- msg:
+		default:
+			d.report(ErrDispatchQueueFull)
+		}
 	}
 }
 

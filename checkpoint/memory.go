@@ -3,29 +3,27 @@ package checkpoint
 import (
 	"context"
 	"sync"
-
-	"github.com/kordar/goetl"
 )
 
 type MemoryCheckpoint struct {
 	mu sync.Mutex
-	m  map[string]goetl.Cursor
+	m  map[string]Cursor
 }
 
 func NewMemoryCheckpoint() *MemoryCheckpoint {
 	return &MemoryCheckpoint{
-		m: make(map[string]goetl.Cursor),
+		m: make(map[string]Cursor),
 	}
 }
 
-func (c *MemoryCheckpoint) Load(ctx context.Context, key string) (goetl.Cursor, error) {
+func (c *MemoryCheckpoint) Load(ctx context.Context, key string) (Cursor, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	return c.m[key], nil
 }
 
-func (c *MemoryCheckpoint) Save(ctx context.Context, key string, cursor goetl.Cursor) error {
+func (c *MemoryCheckpoint) Save(ctx context.Context, key string, cursor Cursor) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

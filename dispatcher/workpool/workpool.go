@@ -92,6 +92,11 @@ func (mh *TaskHandle) SendToTaskQueue(ctx context.Context, errChan chan<- error,
 	mh.sendToWorker(ctx, errChan, workItem{taskID: TaskID(taskID), msg: msg}, workerID)
 }
 
+func (mh *TaskHandle) SendToTaskQueueBlocking(ctx context.Context, errChan chan<- error, taskID string, msg goetl.Message) {
+	workerID := mh.nextWorkerID()
+	mh.sendToWorkerBlocking(ctx, errChan, workItem{taskID: TaskID(taskID), msg: msg}, workerID)
+}
+
 func (mh *TaskHandle) SendToTaskQueueP(ctx context.Context, errChan chan<- error, taskID string, msg goetl.Message, pools []int) {
 	if len(pools) == 0 {
 		mh.SendToTaskQueue(ctx, errChan, taskID, msg)
@@ -136,6 +141,18 @@ func (mh *TaskHandle) sendToWorker(ctx context.Context, errChan chan<- error, it
 		case errChan <- ErrTaskQueueFull:
 		default:
 		}
+	}
+}
+
+func (mh *TaskHandle) sendToWorkerBlocking(ctx context.Context, errChan chan<- error, item workItem, workerID int) {
+	if workerID < 0 || workerID >= mh.WorkerPoolSize {
+		return
+	}
+	q := mh.TaskQueue[workerID]
+	select {
+	case <-ctx.Done():
+		return
+	case q <- item:
 	}
 }
 
