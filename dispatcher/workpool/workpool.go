@@ -3,10 +3,10 @@ package workpool
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sync"
 
 	"github.com/kordar/goetl"
-	logger "github.com/kordar/gologger"
 )
 
 type TaskID string
@@ -64,7 +64,7 @@ func (mh *TaskHandle) AddTask(taskID string, handler HandlerFunc) {
 		panic("repeated func , taskId = " + taskID)
 	}
 	mh.Container[id] = handler
-	logger.Infof("[%s] the task named '%s' was added successfully.", mh.Name, taskID)
+	slog.Info("the task was added successfully.", "name", mh.Name, "task-id", taskID)
 }
 
 func (mh *TaskHandle) StartWorkerPool(ctx context.Context, errChan chan<- error) {
@@ -161,7 +161,7 @@ func (mh *TaskHandle) doMsgHandler(ctx context.Context, errChan chan<- error, it
 	handler, ok := mh.Container[item.taskID]
 	mh.mu.RUnlock()
 	if !ok {
-		logger.Infof("[%s] no task named '%s' was found..", mh.Name, string(item.taskID))
+		slog.Info("no task was found.", "name", mh.Name, "task-id", string(item.taskID))
 		return
 	}
 	if err := handler(ctx, item.msg); err != nil {
@@ -174,7 +174,7 @@ func (mh *TaskHandle) doMsgHandler(ctx context.Context, errChan chan<- error, it
 
 func (mh *TaskHandle) startOneWorker(ctx context.Context, errChan chan<- error, workerID int, taskQueue chan workItem) {
 	defer mh.wg.Done()
-	logger.Infof("[%s] WorkerID = %d is starting.", mh.Name, workerID)
+	slog.Info("Worker is starting.", "name", mh.Name, "worker-id", workerID)
 	for {
 		select {
 		case <-ctx.Done():
