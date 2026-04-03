@@ -77,7 +77,13 @@ func (e *Engine) UnloadSource(name string) {
 
 func (e *Engine) runSource(ctx context.Context, s goetl.Source) {
 	defer e.wg.Done()
-	ch := make(chan goetl.Message, 256)
+	e.mu.RLock()
+	buf := e.sourceChanBuffer
+	e.mu.RUnlock()
+	if buf <= 0 {
+		buf = 256
+	}
+	ch := make(chan goetl.Message, buf)
 	go func() {
 		if err := s.Start(ctx, ch); err != nil {
 			select {

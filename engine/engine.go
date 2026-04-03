@@ -27,11 +27,14 @@ type Engine struct {
 	chain *goetl.Chain
 
 	dispatcher goetl.Dispatcher
+
+	sourceChanBuffer int
 }
 
 func NewEngine() *Engine {
 	return &Engine{
 		runningSources: make(map[string]context.CancelFunc),
+		sourceChanBuffer: 256,
 	}
 }
 
@@ -85,6 +88,15 @@ func (e *Engine) Stop() {
 	if e.cancel != nil {
 		e.cancel()
 	}
+}
+
+func (e *Engine) WithSourceChanBuffer(n int) *Engine {
+	e.mu.Lock()
+	if n > 0 {
+		e.sourceChanBuffer = n
+	}
+	e.mu.Unlock()
+	return e
 }
 
 // Run 启动引擎并在独立协程中消费 out/err 通道
